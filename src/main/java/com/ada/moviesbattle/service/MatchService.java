@@ -4,6 +4,7 @@ import com.ada.moviesbattle.domain.dto.MatchDTO;
 import com.ada.moviesbattle.domain.dto.MovieDTO;
 import com.ada.moviesbattle.domain.entity.MatchEntity;
 import com.ada.moviesbattle.repository.MatchRepository;
+import com.ada.moviesbattle.security.utils.SecurityUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -12,6 +13,7 @@ import java.util.*;
 public class MatchService {
 
 
+    public static final int MAX_FAIL_ATTEMPTS = 3;
     private final MatchRepository matchRepository;
 
     private final MovieService movieService;
@@ -24,24 +26,17 @@ public class MatchService {
         this.rankingService = rankingService;
     }
 
-    public String setValidMatch(Object user) {
-        MatchEntity match = new MatchEntity();
-        match.setUserId(user.toString());
-        match.setCorrectScoreCount(10D);
-        match.setCurrentErrorCount(0);
-        matchRepository.save(match);
-        return "Match";
+   public Object getValidMatch() {
+    String loggedUser = SecurityUtils.getLoggedUser();
+    MatchEntity currentlyMatch = matchRepository.findByUserId(loggedUser)
+            .orElseGet(() -> createNewMatch(loggedUser));
+    return buildFromEntity(currentlyMatch);
     }
 
-    public Object getValidMatch(String user) {
-        Optional<MatchEntity> matchByUserId = matchRepository.findByUserId(user);
-        if (matchByUserId.isPresent()) {
-            MatchEntity oldMatch = matchByUserId.get();
-            return buildFromEntity(oldMatch);
-        }
+    private MatchEntity createNewMatch(String user) {
         MatchEntity newMatch = new MatchEntity(user, new ArrayList<>(movieService.generateUniquePair()));
         matchRepository.save(newMatch);
-        return buildFromEntity(newMatch);
+        return newMatch;
     }
 
     public MatchDTO buildFromEntity(MatchEntity matchEntity) {
@@ -53,33 +48,42 @@ public class MatchService {
                 .build();
     }
 
-    public Object userWinnerPrediction(String user, String movieId) {
-        Optional<MatchEntity> matchByUserId = matchRepository.findByUserId(user);
-        if (matchByUserId.isEmpty()) {
-            return "Match not found";
-        }
-        MatchEntity match = matchByUserId.get();
-        List<String> currentMatchMoviesIds = match.getCurrentMatchMoviesIds();
-        if (!currentMatchMoviesIds.contains(movieId)) {
-            return "Invalid Movie";
-        }
-        MovieDTO winner = buildFromEntity(match).currentMatchMovies().stream()
-                .max(Comparator.comparing(MovieDTO::weightedRating))
-                .orElseThrow( NoSuchElementException::new);
+    public String userWinnerPrediction(String movieId) {
+    String user = SecurityUtils.getLoggedUser();
+    MatchEntity match = matchRepository.findByUserId(user)
+            .orElseThrow(() -> new IllegalStateException("Match not found"));
+    List<String> currentMatchMoviesIds = match.getCurrentMatchMoviesIds();
+    if (!currentMatchMoviesIds.contains(movieId)) throw new NoSuchElementException("The chosen movie is not part of the current match");
 
-        if (winner.imdbId().equals(movieId)) {
-            match.setCorrectScoreCount(match.getCorrectScoreCount() + 1);
-        } else {
-            match.setCurrentErrorCount(match.getCurrentErrorCount() + 1);
-            if (match.getCurrentErrorCount() >= 3) {
-                createScoreAndDeleteCurrentlyMatch(match);
-                return "Match finished";
-            }
-        }
-        match.setCurrentMatchMoviesIds(new ArrayList<>(movieService.generateUniquePair()));
-        matchRepository.save(match);
-        return "boora";
+    MovieDTO winner = findWinnerMovie(match);
+    updateMatchScores(match, winner, movieId);
+    handleMatchCompletion(match);
+
+    match.setCurrentMatchMoviesIds(new ArrayList<>(movieService.generateUniquePair()));
+    matchRepository.save(match);
+    return "Valid Answer! Next match started!";
+}
+
+private MovieDTO findWinnerMovie(MatchEntity match) {
+    return buildFromEntity(match).currentMatchMovies().stream()
+            .max(Comparator.comparing(MovieDTO::weightedRating))
+            .orElseThrow( NoSuchElementException::new);
+}
+
+private void updateMatchScores(MatchEntity match, MovieDTO winner, String movieId) {
+    if (winner.imdbId().equals(movieId)) {
+        match.setCorrectScoreCount(match.getCorrectScoreCount() + 1);
+    } else {
+        match.setCurrentErrorCount(match.getCurrentErrorCount() + 1);
     }
+}
+
+private void handleMatchCompletion(MatchEntity match) {
+    if (match.getCurrentErrorCount() >= MAX_FAIL_ATTEMPTS) {
+        createScoreAndDeleteCurrentlyMatch(match);
+        throw new IllegalStateException("Match finished, Maximum attempts reached!");
+    }
+}
 
     private void createScoreAndDeleteCurrentlyMatch(MatchEntity match) {
         rankingService.create(match.getUserId(), calculateScore(match));
