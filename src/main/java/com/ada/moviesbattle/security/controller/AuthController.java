@@ -13,12 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Authentication Controller", description = "Controller for user authentication")
+@Tag(name = "Authentication Controller", description = "Controller for user register a new user and login into the system")
 @RestController
 @RequestMapping("auth")
 public class AuthController {
@@ -33,17 +34,23 @@ public class AuthController {
     @Autowired
     private TokenService tokenService;
 
+    @Operation(summary = "Login",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "User logged in successfully"),
+                    @ApiResponse(responseCode = "401", description = "Invalid credentials"),
+                    @ApiResponse(responseCode = "500", description = "Server error")
+            })
     @PostMapping("/login")
     public ResponseEntity<Object> login(@RequestBody AuthDTO authDTO) {
-        var authenticationToken = new UsernamePasswordAuthenticationToken(authDTO.username(), authDTO.password());
-        var authenticate = authenticationManager.authenticate(authenticationToken);
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(authDTO.username(), authDTO.password());
+        Authentication authenticate = authenticationManager.authenticate(authenticationToken);
         var token = tokenService.generateToken((UserEntity) authenticate.getPrincipal());
         return ResponseEntity.ok(new LoginResponseDTO(token));
     }
     @Operation(summary = "Register a new user",
             responses = {
                     @ApiResponse(responseCode = "200", description = "User registered successfully"),
-                    @ApiResponse(responseCode = "400", description = "Invalid request body"),
+                    @ApiResponse(responseCode = "409", description = "User already exists"),
                     @ApiResponse(responseCode = "500", description = "Server error")
             })
     @PostMapping("/register")
