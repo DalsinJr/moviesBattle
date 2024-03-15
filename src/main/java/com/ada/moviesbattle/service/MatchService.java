@@ -96,8 +96,8 @@ private void handleMatchCompletion(MatchEntity match) {
         return totalQuizzes * correctPercentage;
     }
     public void finishMatch(String user) {
-        Optional<MatchEntity> matchByUserId = matchRepository.findByUserId(user);
-        matchByUserId.ifPresent(this::createScoreAndDeleteCurrentlyMatch);
+        matchRepository.findByUserId(user)
+                .ifPresent(this::createScoreAndDeleteCurrentlyMatch);
     }
 
 
