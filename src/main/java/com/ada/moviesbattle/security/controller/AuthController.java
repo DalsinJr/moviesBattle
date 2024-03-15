@@ -34,7 +34,7 @@ public class AuthController {
     @Autowired
     private TokenService tokenService;
 
-    @Operation(summary = "Login",
+    @Operation(summary = "Login into the system with username and password",
             responses = {
                     @ApiResponse(responseCode = "200", description = "User logged in successfully"),
                     @ApiResponse(responseCode = "401", description = "Invalid credentials"),
