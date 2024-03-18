@@ -5,13 +5,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Match", description = "Match Controller")
 @RestController
+@RequestMapping("/match")
 public class MatchController {
 
     private final IMatchService matchService;
@@ -27,7 +25,7 @@ public class MatchController {
             @ApiResponse(responseCode = "404", description = "All possible pairs have been used"),
             @ApiResponse(responseCode = "500", description = "Server error")
     })
-    @GetMapping("/match")
+    @GetMapping
     public ResponseEntity getValidMatch() {
         return ResponseEntity.ok(matchService.getValidMatch());
     }
@@ -39,12 +37,12 @@ public class MatchController {
             @ApiResponse(responseCode = "409", description = "The chosen movie is not part of the current match"),
             @ApiResponse(responseCode = "500", description = "Server error")
     })
-    @PostMapping("/match/{movieId}")
+    @PostMapping("/{movieId}")
     public ResponseEntity userWinnerPrediction(@PathVariable String movieId) {
         return ResponseEntity.ok(matchService.userWinnerPrediction(movieId));
     }
 
-    @PostMapping("match/finish")
+    @PostMapping("/finish")
     public ResponseEntity finishMatch() {
         matchService.finishMatch();
         return ResponseEntity.ok().build();
