@@ -9,7 +9,6 @@ import com.ada.moviesbattle.security.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,15 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("auth")
 public class AuthController {
 
-    @Autowired
-    private  AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
+    private final UserService userService;
 
-    @Autowired
-    private UserService userService;
+    private final TokenService tokenService;
 
-    @Autowired
-    private TokenService tokenService;
+    public AuthController(AuthenticationManager authenticationManager, UserService userService, TokenService tokenService) {
+        this.authenticationManager = authenticationManager;
+        this.userService = userService;
+        this.tokenService = tokenService;
+    }
 
     @Operation(summary = "Login into the system with username and password",
             responses = {
@@ -54,7 +55,7 @@ public class AuthController {
                     @ApiResponse(responseCode = "500", description = "Server error")
             })
     @PostMapping("/register")
-    public ResponseEntity<Object> register(@RequestBody UserDTO userDTO) {
+    public ResponseEntity register(@RequestBody UserDTO userDTO) {
         userService.addUser(userDTO);
         return ResponseEntity.ok().build();
     }

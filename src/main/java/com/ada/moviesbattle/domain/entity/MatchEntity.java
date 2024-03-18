@@ -20,8 +20,8 @@ public class MatchEntity {
     private Double correctScoreCount;
     private Integer currentErrorCount;
 
-    public MatchEntity(String string, List<String> currentMatchMoviesIds) {
-        this.userId = string;
+    public MatchEntity(String userId, List<String> currentMatchMoviesIds) {
+        this.userId = userId;
         this.currentMatchMoviesIds = currentMatchMoviesIds;
         this.correctScoreCount = 0D;
         this.currentErrorCount = 0;

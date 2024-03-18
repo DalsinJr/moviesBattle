@@ -1,6 +1,6 @@
 package com.ada.moviesbattle.controller;
 
-import com.ada.moviesbattle.service.RankingService;
+import com.ada.moviesbattle.service.interfaces.IRankingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/ranking")
 public class RankingController {
-    private final RankingService rankingService;
+    private final IRankingService rankingService;
 
-    public RankingController(RankingService rankingService) {
+    public RankingController(IRankingService rankingService) {
         this.rankingService = rankingService;
     }
 
