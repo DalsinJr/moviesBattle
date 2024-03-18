@@ -40,12 +40,12 @@ GET  /swagger-ui.html - Retrieve the API documentation.
 GET  /h2-console - Access the H2 database console.
 
 
-POST /auth/login - Login into the App
-POST /auth/register - Register a new user into the App
-GET  /match - Retrieve a valid match for the logged user
-POST /match/{movieId} to vote for a movie
-POST /match/finish to finish the match for the logged user
-GET  /ranking - Retrieve the ranking of matches
+POST /auth/login        - Login into the App
+POST /auth/register     - Register a new user into the App
+GET  /match             - Retrieve a valid match for the logged user
+POST /match/{movieId}   - Vote for a movie
+POST /match/finish      - Finish the match for the logged user
+GET  /ranking           - Retrieve the ranking of matches
 ```
 
 ## Database
